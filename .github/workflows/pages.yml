@@ -1,0 +1,38 @@
+name: Publish portfolio
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout portfolio source
+        uses: actions/checkout@v4
+        with:
+          repository: FanX07/FanX07.github.io
+          ref: 36a954c1bc4e77135932e490b4da0a9a24de2e15
+          sparse-checkout: fanxia
+          path: source
+      - name: Prepare independent website
+        run: |
+          mkdir site
+          cp -a source/fanxia/. site/
+          printf 'ffanxia.com\n' > site/CNAME
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
