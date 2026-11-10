@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: FanX07/FanX07.github.io
-          ref: 96a7bb7035e8e277ddeae68e458395dbd37e8b72
+          ref: 81aeff1eacbd657dbb992a014ca79d3c0ed9758f
           sparse-checkout: fanxia
           path: source
       - name: Prepare independent website
