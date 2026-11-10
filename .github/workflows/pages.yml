@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 concurrency:
@@ -34,11 +35,26 @@ jobs:
         with:
           path: site
           name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Wait for uploaded Pages artifact
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const name = 'github-pages-' + context.runId + '-' + process.env.GITHUB_RUN_ATTEMPT;
+            for (let attempt = 0; attempt < 18; attempt++) {
+              const { data } = await github.rest.actions.listWorkflowRunArtifacts({ owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId });
+              if (data.artifacts.some(artifact => artifact.name === name && !artifact.expired)) {
+                core.info('Pages artifact is available: ' + name);
+                return;
+              }
+              core.info('Waiting for artifact metadata to become available');
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+            core.setFailed('Uploaded Pages artifact is not yet visible; retry this deployment.');
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
-          timeout: 1200000
+          timeout: 600000
 
 # Fresh deployment after the previous Pages sync timed out.
